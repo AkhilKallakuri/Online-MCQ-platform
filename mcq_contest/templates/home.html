@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+
+{% block title %}Home | MCQ Contest Portal{% endblock %}
+
+{% block content %}
+<style>
+    /* Reset basic styles */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f7fa;
+        color: #333;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Navbar */
+    nav {
+        background-color: #1e1e2f;
+        color: #fff;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    nav .logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    nav .auth-buttons a {
+        color: #fff;
+        margin-left: 1rem;
+        text-decoration: none;
+        background-color: #007bff;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+    }
+
+    nav .auth-buttons a:hover {
+        background-color: #0056b3;
+    }
+
+    /* Main Section */
+    main {
+        flex: 1;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    h1 {
+        font-size: 2.8rem;
+        color: #222;
+        margin-bottom: 1rem;
+    }
+
+    p {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        color: #666;
+    }
+
+    .card-container {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .card {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        width: 250px;
+        padding: 1.5rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: pointer;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: #007bff;
+    }
+
+    .card-text {
+        font-size: 1rem;
+        color: #555;
+    }
+
+    footer {
+        background-color: #1e1e2f;
+        color: #bbb;
+        text-align: center;
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+</style>
+
+<main>
+    <h1>Welcome to the MCQ Contest Portal</h1>
+    <p>Participate in coding contests, view leaderboards, and track your progress. Join now!</p>
+
+    <div class="card-container">
+        <div class="card" onclick="redirectToLogin()">
+            <div class="card-title">Participate Now</div>
+            <div class="card-text">Join the ongoing contests and test your skills.</div>
+        </div>
+        <div class="card" onclick="redirectToLogin()">
+            <div class="card-title">View Contests</div>
+            <div class="card-text">Explore active and upcoming contests.</div>
+        </div>
+        <div class="card" onclick="redirectToLogin()">
+            <div class="card-title">Leaderboard</div>
+            <div class="card-text">Check your rank among other participants.</div>
+        </div>
+    </div>
+</main>
+
+<script>
+    function redirectToLogin() {
+        window.location.href ="{% url 'login' %}";
+    }
+</script>
+{% endblock %}

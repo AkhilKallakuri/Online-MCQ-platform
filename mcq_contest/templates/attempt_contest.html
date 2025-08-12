@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Attempt Contest - {{ contest.name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">{{ contest.name }}</h1>
+            <div id="timer" class="fs-5 fw-bold text-danger">Time Remaining: <span id="time-left">Loading...</span></div>
+        </div>
+        <div class="card-body">
+            <p>
+                <strong>Start:</strong> {{ contest.start_datetime_display }} |
+                <strong>End:</strong> {{ contest.end_datetime_display }} |
+                <strong>Maximum Score:</strong> {{ contest.max_score }}
+            </p>
+            <form method="POST" id="contestForm">
+                {% csrf_token %}
+                {% for question in contest.questions %}
+                    <div class="card mb-3 p-3">
+                        <h3 class="h5">
+                            {{ forloop.counter }}. {{ question.description }}
+                            <span class="text-muted fs-6">(Score: {{ question.score|default:'1' }})</span>
+                        </h3>
+                        {% if question.type == 'blank' %}
+                            <input type="text" class="form-control" name="answer_{{ forloop.counter }}" required>
+                        {% elif question.type == 'mcq' %}
+                            {% for option in question.options %}
+                                <div class="form-check">
+                                    <input type="radio" class="form-check-input" name="answer_{{ forloop.parentloop.counter }}" value="{{ option }}" id="option_{{ forloop.parentloop.counter }}_{{ forloop.counter }}" required>
+                                    <label class="form-check-label" for="option_{{ forloop.parentloop.counter }}_{{ forloop.counter }}">{{ option }}</label>
+                                </div>
+                            {% endfor %}
+                        {% elif question.type == 'msq' %}
+                            {% for option in question.options %}
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="answer_{{ forloop.parentloop.counter }}[]" value="{{ option }}" id="option_{{ forloop.parentloop.counter }}_{{ forloop.counter }}">
+                                    <label class="form-check-label" for="option_{{ forloop.parentloop.counter }}_{{ forloop.counter }}">{{ option }}</label>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">Submit Answers</button>
+            </form>
+            <a href="{% url 'student_dashboard' %}" class="btn btn-light mt-3">Back</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Full-screen mode
+    document.addEventListener("DOMContentLoaded", function() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        }
+
+        // Warn on full-screen exit
+        document.addEventListener("fullscreenchange", function() {
+            if (!document.fullscreenElement) {
+                alert("Please stay in full-screen mode to continue the contest.");
+                elem.requestFullscreen();
+            }
+        });
+    });
+    const durationMinutes = Number('{{ contest.duration|default:"60" }}');
+    const durationSeconds = durationMinutes * 60;
+    let startTime = sessionStorage.getItem('contestStartTime_{{ contest.id }}');
+    let timeLeft;
+
+    if (!startTime) {
+        startTime = new Date().toISOString();
+        sessionStorage.setItem('contestStartTime_{{ contest.id }}', startTime);
+    }
+
+    function updateTimer() {
+        const now = new Date();
+        const start = new Date(startTime);
+        const elapsedSeconds = Math.floor((now - start) / 1000);
+        timeLeft = Math.max(0, durationSeconds - elapsedSeconds);
+
+        if (timeLeft <= 0) {
+            document.getElementById("time-left").textContent = "00:00";
+            alert("Time is up! Submitting your answers.");
+            document.getElementById("contestForm").submit();
+            return;
+        }
+
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        document.getElementById("time-left").textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    updateTimer();
+    setInterval(updateTimer, 1000);
+</script>
+{% endblock %}

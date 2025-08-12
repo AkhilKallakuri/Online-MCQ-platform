@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Contest - {{ contest.name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4">Edit Contest: {{ contest.name }}</h1>
+    <form method="POST" id="contestForm">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="name" class="form-label fw-bold">Contest Name</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ contest.name }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="start_datetime" class="form-label fw-bold">Start Date and Time</label>
+            <input type="datetime-local" class="form-control" id="start_datetime" name="start_datetime" value="{{ contest.start_datetime }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="end_datetime" class="form-label fw-bold">End Date and Time</label>
+            <input type="datetime-local" class="form-control" id="end_datetime" name="end_datetime" value="{{ contest.end_datetime }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="duration" class="form-label fw-bold">Duration (minutes)</label>
+            <input type="number" class="form-control" id="duration" name="duration" value="{{ contest.duration }}" min="1" required>
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if contest.is_active %}checked{% endif %}>
+            <label class="form-check-label" for="is_active">Active</label>
+        </div>
+        <h2 class="mb-3">Questions</h2>
+        <div id="questions" class="mb-3">
+            {% if contest.questions %}
+                {% for question in contest.questions %}
+                    <div class="card mb-3 p-3" id="question_{{ forloop.counter }}">
+                        <h3>Question {{ forloop.counter }}</h3>
+                        <div class="mb-3">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" name="question_type_{{ forloop.counter }}" onchange="toggleOptions(this, '{{ forloop.counter }}')">
+                                <option value="blank" {% if question.type == 'blank' %}selected{% endif %}>Blank</option>
+                                <option value="mcq" {% if question.type == 'mcq' %}selected{% endif %}>Multiple Choice (MCQ)</option>
+                                <option value="msq" {% if question.type == 'msq' %}selected{% endif %}>Multiple Select (MSQ)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="question_description_{{ forloop.counter }}" required>{{ question.description }}</textarea>
+                        </div>
+                        <div id="options_{{ forloop.counter }}" class="options-block mb-3">
+                            {% if question.options %}
+                                {% for option in question.options %}
+                                    <div class="d-flex mb-2">
+                                        <input type="text" class="form-control me-2" name="options_{{ forloop.parentloop.counter }}[]" value="{{ option }}">
+                                        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <button type="button" class="btn btn-warning mb-3" onclick="addOption('{{ forloop.counter }}')">Add Option</button>
+                        <div class="mb-3">
+                            <label class="form-label">Score</label>
+                            <input type="number" class="form-control" name="question_score_{{ forloop.counter }}" value="{{ question.score|default:'1' }}" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Correct Answer</label>
+                            <input type="text" class="form-control" name="correct_answer_{{ forloop.counter }}" value="{% if question.type == 'msq' %}{{ question.answer|join:', ' }}{% else %}{{ question.answer }}{% endif %}" required>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-danger fst-italic">No questions defined. Add a question below.</p>
+            {% endif %}
+        </div>
+        <input type="hidden" name="question_count" id="questionCount" value="{{ contest.questions|length|default:'0' }}">
+        <button type="button" class="btn btn-warning mb-3" onclick="addQuestion()">Add Question</button>
+        <button type="submit" class="btn btn-primary">Update Contest</button>
+    </form>
+    <a href="{% url 'admin_dashboard' %}" class="btn btn-light mt-3">Back</a>
+</div>
+
+<script>
+    function getCurrentDateTime() {
+        const now = new Date();
+        return now.toISOString().slice(0, 16);
+    }
+
+    window.onload = function() {
+        const startInput = document.getElementById("start_datetime");
+        const endInput = document.getElementById("end_datetime");
+        const durationInput = document.getElementById("duration");
+        const currentDateTime = getCurrentDateTime();
+
+        startInput.setAttribute("min", currentDateTime);
+        endInput.setAttribute("min", currentDateTime);
+
+        startInput.addEventListener("change", function() {
+            if (this.value < currentDateTime) {
+                this.value = currentDateTime;
+            }
+            endInput.setAttribute("min", this.value);
+        });
+
+        endInput.addEventListener("change", function() {
+            if (this.value < startInput.value) {
+                this.value = startInput.value;
+            }
+        });
+
+        durationInput.addEventListener("change", function() {
+            if (this.value < 1) {
+                this.value = 1;
+            }
+        });
+
+        document.querySelectorAll(".card select").forEach(function(select) {
+            const questionId = select.name.split("_")[2];
+            toggleOptions(select, questionId);
+        });
+
+        questionCounter = parseInt(document.getElementById("questionCount").value, 10) || 0;
+    };
+
+    let questionCounter;
+
+    function addQuestion() {
+        questionCounter++;
+        document.getElementById("questionCount").value = questionCounter;
+
+        const questionDiv = document.createElement("div");
+        questionDiv.className = "card mb-3 p-3";
+        questionDiv.id = `question_${questionCounter}`;
+        questionDiv.innerHTML = `
+            <h3>Question ${questionCounter}</h3>
+            <div class="mb-3">
+                <label class="form-label">Type</label>
+                <select class="form-select" name="question_type_${questionCounter}" onchange="toggleOptions(this, '${questionCounter}')">
+                    <option value="blank">Blank</option>
+                    <option value="mcq">Multiple Choice (MCQ)</option>
+                    <option value="msq">Multiple Select (MSQ)</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="question_description_${questionCounter}" required></textarea>
+            </div>
+            <div id="options_${questionCounter}" class="options-block mb-3"></div>
+            <button type="button" class="btn btn-warning mb-3" onclick="addOption('${questionCounter}')">Add Option</button>
+            <div class="mb-3">
+                <label class="form-label">Score</label>
+                <input type="number" class="form-control" name="question_score_${questionCounter}" value="1" min="0" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Correct Answer</label>
+                <input type="text" class="form-control" name="correct_answer_${questionCounter}" required>
+            </div>
+        `;
+        document.getElementById("questions").appendChild(questionDiv);
+        addOption(questionCounter);
+        addOption(questionCounter);
+        toggleOptions(questionDiv.querySelector("select"), questionCounter);
+    }
+
+    function addOption(questionId) {
+        const optionsDiv = document.getElementById(`options_${questionId}`);
+        const optionCount = optionsDiv.children.length;
+        if (optionCount >= 10) {
+            alert("Maximum 10 options allowed.");
+            return;
+        }
+        const optionInput = document.createElement("div");
+        optionInput.className = "d-flex mb-2";
+        optionInput.innerHTML = `
+            <input type="text" class="form-control me-2" name="options_${questionId}[]" placeholder="Option ${optionCount + 1}">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+        `;
+        optionsDiv.appendChild(optionInput);
+    }
+
+    function toggleOptions(select, questionId) {
+        const optionsDiv = document.getElementById(`options_${questionId}`);
+        optionsDiv.style.display = select.value === "blank" ? "none" : "block";
+    }
+</script>
+{% endblock %}

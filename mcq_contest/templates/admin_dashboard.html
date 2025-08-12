@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Top Section -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h1 class="fw-bold text-dark">Admin Dashboard</h1>
+    </div>
+
+    <!-- Statistic Cards -->
+    <div class="row mb-5 text-center">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="text-muted">Total Contests</h5>
+                    <h2 class="text-primary fw-bold">{{ total_contests|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="text-muted">Upcoming Contests</h5>
+                    <h2 class="text-warning fw-bold">{{ upcoming_contests|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="text-muted">Ongoing Contests</h5>
+                    <h2 class="text-success fw-bold">{{ ongoing_contests|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Contest Button -->
+    <div class="text-end mb-4">
+        <a href="{% url 'create_contest' %}" class="btn btn-primary btn-lg rounded-pill shadow-sm">+ Create New Contest</a>
+    </div>
+
+    <!-- Contests Table -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h5 class="mb-4 text-secondary">All Contests</h5>
+
+            {% if contests %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th>Status</th>
+                            <th>Participants</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contest in contests %}
+                        <tr>
+                            <td class="fw-semibold text-primary">{{ contest.name }}</td>
+                            <td>{{ contest.start_datetime_display }}</td>
+                            <td>{{ contest.end_datetime_display }}</td>
+                            <td>
+                                {% if contest.status == 'Ongoing' %}
+                                    <span class="badge bg-success rounded-pill">{{ contest.status }}</span>
+                                {% elif contest.status == 'Upcoming' %}
+                                    <span class="badge bg-warning text-dark rounded-pill">{{ contest.status }}</span>
+                                {% elif contest.status == 'Ended' %}
+                                    <span class="badge bg-danger rounded-pill">{{ contest.status }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary rounded-pill">{{ contest.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ contest.participant_count }}</td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-2">
+                                    <a href="{% url 'edit_contest' contest.id %}" class="btn btn-sm btn-outline-primary rounded-pill">Edit</a>
+                                    <a href="{% url 'delete_contest' contest.id %}" class="btn btn-sm btn-outline-danger rounded-pill">Delete</a>
+                                    <a href="{% url 'contest_leaderboard' contest.id %}" class="btn btn-sm btn-outline-secondary rounded-pill">Leaderboard</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center text-muted fs-5">No contests available yet.</p>
+            {% endif %}
+
+            <!-- Debug Section (Uncomment for Troubleshooting) -->
+            <!--
+            <div class="mt-4">
+                <h6 class="text-muted">Debug Info</h6>
+                <p>Current Time (Asia/Kolkata): {{ debug_now }}</p>
+                <p>Contests Processed: {{ contests|length }}</p>
+                <ul>
+                    {% for contest in contests %}
+                    <li>
+                        {{ contest.name }}:
+                        Start: {{ contest.start_datetime }},
+                        End: {{ contest.end_datetime }},
+                        Status: {{ contest.status }},
+                        Active: {{ contest.is_active }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            -->
+        </div>
+    </div>
+</div>
+{% endblock %}

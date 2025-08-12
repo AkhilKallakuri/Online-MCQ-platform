@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-sm p-4">
+        <h1 class="fw-bold text-primary mb-4">Student Dashboard</h1>
+
+        {% if messages %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {% for message in messages %}
+            <p class="mb-0">{{ message }}</p>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
+        <!-- Ongoing Contests -->
+        <h2 class="h4 fw-bold text-secondary mb-3">Ongoing Contests</h2>
+        {% if ongoing_contests %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Contest</th>
+                        <th>Status</th>
+                        <th>Users Taken</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contest in ongoing_contests %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'attempt_contest' contest.id %}" class="text-primary fw-semibold text-decoration-none">{{ contest.name }}</a>
+                            <br>
+                            <small class="text-muted">Starts: {{ contest.start_datetime_display }}</small><br>
+                            <small class="text-muted">Ends: {{ contest.end_datetime_display }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-success rounded-pill">{{ contest.status }}</span>
+                        </td>
+                        <td>
+                            <span class="text-primary fw-semibold">{{ contest.participant_count }}</span>
+                        </td>
+                        <td>
+                            {% if contest.attempted %}
+                            <span class="text-muted">Already Attempted (Score: {{ contest.user_score|default:'0' }})</span>
+                            {% else %}
+                            <a href="{% url 'attempt_contest' contest.id %}" class="btn btn-success btn-sm rounded-pill">Join</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No ongoing contests available.</p>
+        {% endif %}
+
+        <!-- Upcoming Contests -->
+        <h2 class="h4 fw-bold text-secondary mt-5 mb-3">Upcoming Contests</h2>
+        {% if upcoming_contests %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Contest</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contest in upcoming_contests %}
+                    <tr>
+                        <td>
+                            <span class="text-primary fw-semibold">{{ contest.name }}</span>
+                            <br>
+                            <small class="text-muted">Starts: {{ contest.start_datetime_display }}</small><br>
+                            <small class="text-muted">Ends: {{ contest.end_datetime_display }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning text-dark rounded-pill">{{ contest.status }}</span>
+                        </td>
+                        <td>
+                            <span class="text-muted">Not yet available</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No upcoming contests available.</p>
+        {% endif %}
+
+        <!-- Debug Section (Uncomment for Troubleshooting) -->
+        <!--
+        <div class="mt-4">
+            <h6 class="text-muted">Debug Info</h6>
+            <p>Current Time (Asia/Kolkata): {{ debug_now }}</p>
+            <p>Ongoing Contests: {{ ongoing_contests|length }}</p>
+            <p>Upcoming Contests: {{ upcoming_contests|length }}</p>
+            <ul>
+                {% for contest in ongoing_contests %}
+                <li>
+                    {{ contest.name }} (Ongoing):
+                    Start: {{ contest.start_datetime }},
+                    End: {{ contest.end_datetime }},
+                    Attempted: {{ contest.attempted }},
+                    Score: {{ contest.user_score|default:'None' }}
+                </li>
+                {% endfor %}
+                {% for contest in upcoming_contests %}
+                <li>
+                    {{ contest.name }} (Upcoming):
+                    Start: {{ contest.start_datetime }},
+                    End: {{ contest.end_datetime }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        -->
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leaderboard - {{ contest.name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #343a40;
+            color: white;
+            padding: 10px 20px;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .navbar .brand {
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .navbar .user-menu {
+            position: relative;
+            cursor: pointer;
+        }
+        .navbar .username {
+            color: white;
+            font-weight: bold;
+            padding: 5px 10px;
+            font-size: 16px;
+        }
+        .navbar .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: #343a40;
+            border-radius: 5px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+            min-width: 120px;
+        }
+        .navbar .dropdown.active {
+            display: block;
+        }
+        .navbar .dropdown a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            display: block;
+            font-size: 14px;
+        }
+        .navbar .dropdown a:hover {
+            background-color: #495057;
+            text-decoration: underline;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #343a40;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            text-align: center;
+        }
+        table {
+            width: 80%;
+            max-width: 800px;
+            border-collapse: collapse;
+            margin: 20px auto;
+            background-color: white;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 6px 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+        td {
+            color: #343a40;
+            font-size: 16px;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #e9ecef;
+        }
+        .back-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .download-btn {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            margin: 10px auto;
+            text-align: center;
+            display: block;
+            width: fit-content;
+        }
+        .download-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+      <div class="brand">GMRIT</div>
+      <div class="user-menu" onclick="toggleDropdown()">
+          <span class="username">Admin - {{ username|default:"User" }}</span>
+          <div class="dropdown" id="userDropdown">
+              <a href="{% url 'logout' %}">Logout</a>
+          </div>
+      </div>
+    </div>
+    <div class="container">
+      <h1>Leaderboard - {{ contest.name }}</h1>
+      <p>Start: {{ contest.start_datetime_display }} | End: {{ contest.end_datetime_display }}</p>
+      <p>Participants: {{ participant_count }}</p>
+      
+      <h2>Leaderboard</h2>
+      <a href="#" class="download-btn" onclick="downloadExcel()">Download as Excel</a>
+      <table id="leaderboardTable">
+          <thead>
+              <tr>
+                  <th>Student Name</th>
+                  <th>Score</th>
+              </tr>
+          </thead>
+          <tbody>
+              {% for entry in leaderboard %}
+              <tr>
+                  <td>{{ entry.student_name }}</td>
+                  <td>{{ entry.score }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                  <td colspan="2">No participants yet.</td>
+              </tr>
+              {% endfor %}
+          </tbody>
+      </table>
+      <a href="{% url 'admin_dashboard' %}" class="back-link">Back to Dashboard</a>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+  function toggleDropdown() {
+      const dropdown = document.getElementById("userDropdown");
+      dropdown.classList.toggle("active");
+  }
+
+  function downloadExcel() {
+      try {
+          const table = document.getElementById("leaderboardTable");
+          if (!table) {
+              console.error("Table with ID 'leaderboardTable' not found.");
+              alert("Error: Leaderboard table not found.");
+              return;
+          }
+
+          const workbook = XLSX.utils.book_new();
+          const sheetData = [];
+
+          // Get headers
+          const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.textContent.trim());
+          sheetData.push(headers);
+
+          // Get rows
+          const rows = table.querySelectorAll("tbody tr");
+          rows.forEach(row => {
+              const cells = Array.from(row.querySelectorAll("td")).map(td => td.textContent.trim());
+              if (cells.length === headers.length && !cells.includes("No participants yet.")) { // Skip empty message
+                  sheetData.push(cells);
+              }
+          });
+
+          if (sheetData.length <= 1) {
+              alert("No participant data available to download.");
+              return;
+          }
+
+          // Create worksheet
+          const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+          XLSX.utils.book_append_sheet(workbook, worksheet, "Leaderboard");
+
+          // Create file name safely
+          const filename = "{{ contest.name|slugify|default:'leaderboard' }}_Leaderboard.xlsx";
+
+          // Save the file
+          XLSX.writeFile(workbook, filename);
+      } catch (error) {
+          console.error("Error generating Excel file:", error);
+          alert("An error occurred while generating the Excel file. Please try again.");
+      }
+  }
+</script>
+
+</body>
+</html>
